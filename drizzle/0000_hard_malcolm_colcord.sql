@@ -3,7 +3,7 @@ CREATE TABLE `passwords` (
 	`user_id` text,
 	`created_at` integer DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	`updated_at` integer DEFAULT CURRENT_TIMESTAMP,
-	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action
+	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
 CREATE TABLE `sessions` (
@@ -13,7 +13,7 @@ CREATE TABLE `sessions` (
 	`user_id` text NOT NULL,
 	`created_at` integer DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	`updated_at` integer DEFAULT CURRENT_TIMESTAMP,
-	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action
+	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
 CREATE TABLE `users` (

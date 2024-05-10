@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "564f0aa2-d392-4a72-9811-90c9d16452a3",
+  "id": "556d5bd5-b326-4814-8129-5f8747d6a535",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "passwords": {
@@ -50,7 +50,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -117,7 +117,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
