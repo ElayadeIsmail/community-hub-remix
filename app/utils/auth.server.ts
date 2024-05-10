@@ -2,7 +2,7 @@ import { redirect } from '@remix-run/node';
 import { and, eq, gt } from 'drizzle-orm';
 import { safeRedirect } from 'remix-utils/safe-redirect';
 import { db } from '~/database/client';
-import { sessions } from '~/database/schemas';
+import { sessions, users } from '~/database/schemas';
 import { combineResponseInits } from './misc.tsx';
 import { sessionStorage } from './session.server';
 
@@ -27,15 +27,14 @@ export const getUserId = async (request: Request) => {
 		with: { user: true },
 	});
 	if (!session?.user) {
-		// do logout
-		return null;
+		throw await logout({ request });
 	}
 	return session.user.id;
 };
 
 export const requireUserId = async (
 	request: Request,
-	{ redirectTo }: { redirectTo?: string | null }
+	{ redirectTo }: { redirectTo?: string | null } = {}
 ) => {
 	const userId = await getUserId(request);
 	if (!userId) {
@@ -62,8 +61,27 @@ export const requireAnonymous = async (request: Request) => {
 	}
 };
 
+export const requireUser = async (request: Request) => {
+	const userId = await requireUserId(request);
+	const user = await db
+		.select({
+			username: users.username,
+			id: users.id,
+			email: users.email,
+		})
+		.from(users)
+		.where(eq(users.id, userId));
+	if (!user) {
+		throw await logout({ request });
+	}
+	return user;
+};
+
 export const logout = async (
-	{ request, redirectTo }: { request: Request; redirectTo?: string | null },
+	{
+		request,
+		redirectTo = '/',
+	}: { request: Request; redirectTo?: string | null },
 	responseInit?: ResponseInit
 ) => {
 	const cookieSession = await sessionStorage.getSession(
