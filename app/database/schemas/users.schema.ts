@@ -1,6 +1,6 @@
 import { createId } from '@paralleldrive/cuid2';
 import { relations, sql } from 'drizzle-orm';
-import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { integer, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core';
 
 export const users = sqliteTable('users', {
 	id: text('id')
@@ -62,3 +62,29 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
 		references: [users.id],
 	}),
 }));
+
+export const verifications = sqliteTable(
+	'verifications',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => createId()),
+		// phone, email , etc..
+		type: text('type').notNull(),
+		// the email or the phone number
+		target: text('target').notNull(),
+		// the email or the phone number
+		secret: text('secret').notNull(),
+		algorithm: text('algorithm').notNull(),
+		digits: integer('digits').notNull(),
+		period: integer('period').notNull(),
+		charSet: text('char_set').notNull(),
+		expiresAt: integer('expires_at', { mode: 'timestamp_ms' }),
+		createdAt: integer('created_at', { mode: 'timestamp' })
+			.notNull()
+			.default(sql`CURRENT_TIMESTAMP`),
+	},
+	(t) => ({
+		unq: unique().on(t.target, t.type),
+	})
+);
