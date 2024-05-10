@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 const envSchema = z.object({
 	DATABASE_URL: z.string(),
+	SESSION_SECRETS: z.string(),
 });
 
 export const getEnv = () => {
