@@ -23,7 +23,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
 
 export const passwords = sqliteTable('passwords', {
 	hash: text('hash').notNull(),
-	userId: text('user_id').references(() => users.id),
+	userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }),
 	createdAt: integer('created_at', { mode: 'timestamp' })
 		.notNull()
 		.default(sql`CURRENT_TIMESTAMP`),
@@ -31,6 +31,13 @@ export const passwords = sqliteTable('passwords', {
 		.default(sql`CURRENT_TIMESTAMP`)
 		.$onUpdateFn(() => new Date()),
 });
+
+export const passwordsRelations = relations(passwords, ({ one }) => ({
+	user: one(users, {
+		fields: [passwords.userId],
+		references: [users.id],
+	}),
+}));
 
 export const sessions = sqliteTable('sessions', {
 	id: text('id')
@@ -40,7 +47,7 @@ export const sessions = sqliteTable('sessions', {
 	expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
 	userId: text('user_id')
 		.notNull()
-		.references(() => users.id),
+		.references(() => users.id, { onDelete: 'cascade' }),
 	createdAt: integer('created_at', { mode: 'timestamp' })
 		.notNull()
 		.default(sql`CURRENT_TIMESTAMP`),
@@ -48,3 +55,10 @@ export const sessions = sqliteTable('sessions', {
 		.default(sql`CURRENT_TIMESTAMP`)
 		.$onUpdateFn(() => new Date()),
 });
+
+export const sessionsRelations = relations(sessions, ({ one }) => ({
+	user: one(users, {
+		fields: [sessions.userId],
+		references: [users.id],
+	}),
+}));
