@@ -3,14 +3,14 @@ import bcrypt from 'bcryptjs';
 import { and, eq, gt } from 'drizzle-orm';
 import { safeRedirect } from 'remix-utils/safe-redirect';
 import { db } from '~/database/client';
-import { sessions, users } from '~/database/schemas';
+import { passwords, sessions, users } from '~/database/schemas';
 import { combineResponseInits } from './misc.tsx';
 import { sessionStorage } from './session.server';
 
 const SESSION_EXPIRATION_TIME = 1000 * 60 * 60 * 24 * 30; // 30 days
 
 export const getExpirationTimeStampMs = () => {
-	return Date.now() + SESSION_EXPIRATION_TIME;
+	return new Date(Date.now() + SESSION_EXPIRATION_TIME);
 };
 export const sessionKey = 'sessionId';
 
@@ -31,6 +31,21 @@ export const getUserId = async (request: Request) => {
 		throw await logout({ request });
 	}
 	return session.user.id;
+};
+
+export const getOptionalUser = async (request: Request) => {
+	const userId = await getUserId(request);
+	if (!userId) return null;
+	const user = await db.query.users.findFirst({
+		where: eq(users.id, userId),
+		columns: {
+			id: true,
+			username: true,
+			name: true,
+			email: true,
+		},
+	});
+	return user;
 };
 
 export const requireUserId = async (
@@ -101,6 +116,51 @@ export const logout = async (
 		})
 	);
 };
+
+interface SignUpProps {
+	username: string;
+	name: string;
+	email: string;
+	password: string;
+	agent: string | null;
+}
+
+export const signup = async ({
+	username,
+	email,
+	name,
+	password,
+	agent,
+}: SignUpProps) => {
+	const hash = await getPasswordHash(password);
+	const session = await db.transaction(async (tx) => {
+		const [user] = await tx
+			.insert(users)
+			.values({ email, name, username })
+			.returning({ id: users.id });
+		const [[session]] = await Promise.all([
+			tx
+				.insert(sessions)
+				.values({
+					userId: user.id,
+					expiresAt: getExpirationTimeStampMs(),
+					agent,
+				})
+				.returning({ id: sessions.id, expiresAt: sessions.expiresAt }),
+			tx.insert(passwords).values({
+				userId: user.id,
+				hash,
+			}),
+		]);
+		return session;
+	});
+	return session;
+};
+
+export async function getPasswordHash(password: string) {
+	const hash = await bcrypt.hash(password, 10);
+	return hash;
+}
 
 export const verifyUserPassword = async (userId: string, password: string) => {
 	const user = await db.query.users.findFirst({
