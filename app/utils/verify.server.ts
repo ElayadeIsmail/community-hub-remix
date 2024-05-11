@@ -1,24 +1,15 @@
 import { generateTOTP, verifyTOTP } from '@epic-web/totp';
 import { and, eq, gt, isNull, or } from 'drizzle-orm';
-import { z } from 'zod';
 import { db } from '~/database/client.js';
 import { verifications } from '~/database/schemas/users.schema.js';
-import { getDomainUrl } from './misc.tsx';
-
-export const codeQueryParam = 'code';
-export const targetQueryParam = 'target';
-export const typeQueryParam = 'type';
-export const redirectToQueryParam = 'redirectTo';
-const types = ['onboarding', 'reset-password'] as const;
-const VerificationTypeSchema = z.enum(types);
-export type VerificationTypes = z.infer<typeof VerificationTypeSchema>;
-
-export const VerifySchema = z.object({
-	[codeQueryParam]: z.string().min(6).max(6),
-	[typeQueryParam]: VerificationTypeSchema,
-	[targetQueryParam]: z.string(),
-	[redirectToQueryParam]: z.string().optional(),
-});
+import { getDomainUrl } from './misc.tsx.js';
+import {
+	codeQueryParam,
+	redirectToQueryParam,
+	targetQueryParam,
+	typeQueryParam,
+	VerificationTypes,
+} from './verify.js';
 
 export function getRedirectToUrl({
 	request,
