@@ -3,6 +3,8 @@ import { z } from 'zod';
 const envSchema = z.object({
 	DATABASE_URL: z.string(),
 	SESSION_SECRETS: z.string(),
+	ADMIN_EMAIL: z.string(),
+	RESEND_API_KEY: z.string(),
 });
 
 export const getEnv = () => {

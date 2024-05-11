@@ -1,4 +1,5 @@
 import { redirect } from '@remix-run/node';
+import bcrypt from 'bcryptjs';
 import { and, eq, gt } from 'drizzle-orm';
 import { safeRedirect } from 'remix-utils/safe-redirect';
 import { db } from '~/database/client';
@@ -99,4 +100,24 @@ export const logout = async (
 			},
 		})
 	);
+};
+
+export const verifyUserPassword = async (userId: string, password: string) => {
+	const user = await db.query.users.findFirst({
+		columns: {
+			id: true,
+		},
+		where: eq(users.id, userId),
+		with: {
+			password: {
+				columns: {
+					hash: true,
+				},
+			},
+		},
+	});
+	if (!user || !user.password) return null;
+	const isPasswordMatch = await bcrypt.compare(password, user.password.hash);
+	if (!isPasswordMatch) return null;
+	return { id: user.id };
 };
