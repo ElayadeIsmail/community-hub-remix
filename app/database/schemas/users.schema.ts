@@ -7,6 +7,7 @@ export const users = sqliteTable('users', {
 		.primaryKey()
 		.$defaultFn(() => createId()),
 	username: text('username').unique().notNull(),
+	name: text('name').notNull(),
 	email: text('email').unique().notNull(),
 	createdAt: integer('created_at', { mode: 'timestamp' })
 		.notNull()
@@ -43,7 +44,7 @@ export const sessions = sqliteTable('sessions', {
 	id: text('id')
 		.primaryKey()
 		.$defaultFn(() => createId()),
-	agent: text('agent').notNull(),
+	agent: text('agent'),
 	expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
 	userId: text('user_id')
 		.notNull()
