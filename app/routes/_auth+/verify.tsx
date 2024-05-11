@@ -4,7 +4,7 @@ import { ActionFunctionArgs, json } from '@remix-run/node';
 import { Form, useActionData, useSearchParams } from '@remix-run/react';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { ErrorList, InputFiled } from '~/components/form';
+import { ErrorList, OTPField } from '~/components/forms';
 import { Button } from '~/components/ui';
 import { db } from '~/database/client';
 import { verifications } from '~/database/schemas';
@@ -126,7 +126,7 @@ const VerifyRoute = () => {
 						id={form.id}
 						onSubmit={form.onSubmit}
 						className='flex-1'>
-						<InputFiled
+						<OTPField
 							labelProps={{
 								htmlFor: fields[codeQueryParam].id,
 								children: 'Code',
@@ -135,6 +135,7 @@ const VerifyRoute = () => {
 								...getInputProps(fields[codeQueryParam], {
 									type: 'text',
 								}),
+								autoComplete: 'one-time-code',
 							}}
 							errors={fields[codeQueryParam].errors}
 						/>

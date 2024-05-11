@@ -9,7 +9,7 @@ import {
 import { Form, Link, useActionData, useSearchParams } from '@remix-run/react';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { ErrorList, InputFiled } from '~/components/form';
+import { ErrorList, InputFiled } from '~/components/forms';
 import { Button } from '~/components/ui';
 import { db } from '~/database/client';
 import { users } from '~/database/schemas';
