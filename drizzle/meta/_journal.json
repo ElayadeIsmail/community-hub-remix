@@ -8,6 +8,13 @@
       "when": 1715467882407,
       "tag": "0000_true_gabe_jones",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1715538967956,
+      "tag": "0001_tough_madripoor",
+      "breakpoints": true
     }
   ]
 }
