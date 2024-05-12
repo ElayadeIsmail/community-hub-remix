@@ -1,5 +1,5 @@
-import { getInputProps, useForm } from '@conform-to/react';
-import { parseWithZod } from '@conform-to/zod';
+import { getFormProps, getInputProps, useForm } from '@conform-to/react';
+import { getZodConstraint, parseWithZod } from '@conform-to/zod';
 import { ActionFunctionArgs, json } from '@remix-run/node';
 import { Form, useActionData, useSearchParams } from '@remix-run/react';
 import { and, eq } from 'drizzle-orm';
@@ -95,6 +95,7 @@ const VerifyRoute = () => {
 	const [form, fields] = useForm({
 		id: 'verify-form',
 		shouldValidate: 'onBlur',
+		constraint: getZodConstraint(VerifySchema),
 		lastResult: actionData?.submission,
 		defaultValue: {
 			code: searchParams.get(codeQueryParam) ?? '',
@@ -123,8 +124,7 @@ const VerifyRoute = () => {
 				<div className='flex w-full gap-2'>
 					<Form
 						method='POST'
-						id={form.id}
-						onSubmit={form.onSubmit}
+						{...getFormProps(form)}
 						className='flex-1'>
 						<OTPField
 							labelProps={{

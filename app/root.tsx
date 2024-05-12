@@ -1,5 +1,5 @@
 import { cssBundleHref } from '@remix-run/css-bundle';
-import type { LinksFunction } from '@remix-run/node';
+import type { LinksFunction, LoaderFunctionArgs } from '@remix-run/node';
 
 import {
 	Link,
@@ -8,10 +8,13 @@ import {
 	Outlet,
 	Scripts,
 	ScrollRestoration,
+	json,
+	useLoaderData,
 } from '@remix-run/react';
 import fontStylesheet from '~/styles/font.css?url';
 import tailwindStylesheet from '~/styles/tailwind.css?url';
 import { Button } from './components/ui';
+import { getOptionalUser } from './utils/auth.server';
 
 export const links: LinksFunction = () => [
 	{ rel: 'stylesheet', href: tailwindStylesheet },
@@ -19,7 +22,13 @@ export const links: LinksFunction = () => [
 	...(cssBundleHref ? [{ rel: 'stylesheet', href: cssBundleHref }] : []),
 ];
 
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+	const user = await getOptionalUser(request);
+	return json({ user });
+};
+
 export function Layout({ children }: { children: React.ReactNode }) {
+	const { user } = useLoaderData<typeof loader>();
 	return (
 		<html lang='en' className='dark'>
 			<head>
@@ -37,12 +46,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
 						Community Hub
 					</Link>
 					<div className='flex space-x-4'>
-						<Button asChild>
-							<Link to='/signup'>Register</Link>
-						</Button>
-						<Button variant='secondary' asChild>
-							<Link to='/login'>Login</Link>
-						</Button>
+						{user ? (
+							<>
+								<span>{user.name}</span>
+							</>
+						) : (
+							<>
+								<Button asChild>
+									<Link to='/signup'>Register</Link>
+								</Button>
+								<Button variant='secondary' asChild>
+									<Link to='/login'>Login</Link>
+								</Button>
+							</>
+						)}
 					</div>
 				</header>
 				{children}

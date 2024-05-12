@@ -1,4 +1,4 @@
-import { getInputProps, useForm } from '@conform-to/react';
+import { getFormProps, getInputProps, useForm } from '@conform-to/react';
 import { getZodConstraint, parseWithZod } from '@conform-to/zod';
 import {
 	ActionFunctionArgs,
@@ -137,7 +137,7 @@ const Onboarding = () => {
 					</p>
 				</div>
 
-				<Form method='POST' id={form.id} onSubmit={form.onSubmit}>
+				<Form method='POST' {...getFormProps(form)}>
 					<InputFiled
 						labelProps={{
 							children: 'username',

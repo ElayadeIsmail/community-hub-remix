@@ -1,5 +1,5 @@
-import { getInputProps, useForm } from '@conform-to/react';
-import { parseWithZod } from '@conform-to/zod';
+import { getFormProps, getInputProps, useForm } from '@conform-to/react';
+import { getZodConstraint, parseWithZod } from '@conform-to/zod';
 import {
 	ActionFunctionArgs,
 	json,
@@ -106,6 +106,7 @@ const SignUpPage = () => {
 	const [form, fields] = useForm({
 		id: 'signup-form',
 		shouldValidate: 'onBlur',
+		constraint: getZodConstraint(SignUpSchema),
 		lastResult: actionData?.submission,
 		defaultValue: { redirectTo },
 		onValidate({ formData }) {
@@ -125,10 +126,7 @@ const SignUpPage = () => {
 
 				<div>
 					<div className='mx-auto w-full max-w-md px-8'>
-						<Form
-							method='POST'
-							id={form.id}
-							onSubmit={form.onSubmit}>
+						<Form method='POST' {...getFormProps(form)}>
 							<InputFiled
 								labelProps={{
 									children: 'email',

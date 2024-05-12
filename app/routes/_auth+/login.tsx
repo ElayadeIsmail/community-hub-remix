@@ -1,22 +1,36 @@
-import { getInputProps, useForm } from '@conform-to/react';
-import { parseWithZod } from '@conform-to/zod';
-import { ActionFunctionArgs, json } from '@remix-run/node';
+import { getFormProps, getInputProps, useForm } from '@conform-to/react';
+import { getZodConstraint, parseWithZod } from '@conform-to/zod';
+import { ActionFunctionArgs, json, redirect } from '@remix-run/node';
 import { Form, Link, useActionData } from '@remix-run/react';
+import { safeRedirect } from 'remix-utils/safe-redirect';
 import { z } from 'zod';
-import { InputFiled } from '~/components/form';
+import { ErrorList, InputFiled } from '~/components/forms';
 import { Button } from '~/components/ui';
+import { login, sessionKey } from '~/utils/auth.server';
 
-const LoginSchema = z.object({
+const LoginFormSchema = z.object({
 	username: z.string().min(4),
 	password: z.string(),
 	redirectTo: z.string().optional(),
-	remember: z.boolean().optional(),
 });
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	const formData = await request.formData();
-	const submission = parseWithZod(formData, { schema: LoginSchema });
-	// Send the submission back to the client if the status is not successful
+	const agent = request.headers.get('User-Agent');
+	const submission = await parseWithZod(formData, {
+		schema: LoginFormSchema.transform(async (data, ctx) => {
+			const session = await login({ ...data, agent });
+			if (!session) {
+				ctx.addIssue({
+					code: 'custom',
+					message: 'Invalid Credentials',
+				});
+				return z.NEVER;
+			}
+			return { ...data, session };
+		}),
+		async: true,
+	});
 	if (submission.status !== 'success') {
 		return json({
 			submission: submission.reply(),
@@ -24,20 +38,30 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		} as const);
 	}
 
-	// DO LOGIN
-	return json({
-		submission: submission.reply(),
-		status: 'success',
-	} as const);
+	const { session, redirectTo } = submission.value;
+
+	const cookieSession = await sessionStorage.getSession(
+		request.headers.get('cookie')
+	);
+	cookieSession.set(sessionKey, session.id);
+
+	return redirect(safeRedirect(redirectTo), {
+		headers: {
+			'set-cookie': await sessionStorage.commitSession(cookieSession, {
+				expires: session.expiresAt,
+			}),
+		},
+	});
 };
 
 const LoginPage = () => {
 	const actionData = useActionData<typeof action>();
 	const [form, fields] = useForm({
 		shouldValidate: 'onBlur',
+		constraint: getZodConstraint(LoginFormSchema),
 		lastResult: actionData?.submission,
 		onValidate({ formData }) {
-			return parseWithZod(formData, { schema: LoginSchema });
+			return parseWithZod(formData, { schema: LoginFormSchema });
 		},
 	});
 
@@ -53,10 +77,7 @@ const LoginPage = () => {
 
 				<div>
 					<div className='mx-auto w-full max-w-md px-8'>
-						<Form
-							method='POST'
-							id={form.id}
-							onSubmit={form.onSubmit}>
+						<Form method='POST' {...getFormProps(form)}>
 							<InputFiled
 								labelProps={{ children: 'Username' }}
 								inputProps={{
@@ -80,35 +101,20 @@ const LoginPage = () => {
 								errors={fields.password.errors}
 							/>
 
-							<div className='flex justify-between'>
-								{/* <CheckboxField
-									labelProps={{
-										htmlFor: fields.remember.id,
-										children: 'Remember me',
-									}}
-									buttonProps={conform.input(
-										fields.remember,
-										{
-											type: 'checkbox',
-										}
-									)}
-									errors={fields.remember.errors}
-								/> */}
-								<div>
-									<Link
-										to='/forgot-password'
-										className='text-body-xs font-semibold'>
-										Forgot password?
-									</Link>
-								</div>
+							<div className='ml-auto'>
+								<Link
+									to='/forgot-password'
+									className='text-body-xs font-semibold'>
+									Forgot password?
+								</Link>
 							</div>
 
-							{/* <input
-								{...conform.input(fields.redirectTo, {
+							<input
+								{...getInputProps(fields.redirectTo, {
 									type: 'hidden',
 								})}
-							/> */}
-							{/* <ErrorList errors={form.errors} id={form.errorId} /> */}
+							/>
+							<ErrorList errors={form.errors} id={form.errorId} />
 
 							<div className='flex items-center justify-between gap-6 pt-3'>
 								<Button

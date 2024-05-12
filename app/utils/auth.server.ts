@@ -157,17 +157,43 @@ export const signup = async ({
 	return session;
 };
 
+export const login = async ({
+	username,
+	password,
+	agent,
+}: Pick<SignUpProps, 'username' | 'password' | 'agent'>) => {
+	const user = await verifyUserPassword(username, password);
+
+	if (!user) return null;
+
+	const [session] = await db
+		.insert(sessions)
+		.values({
+			userId: user.id,
+			expiresAt: getExpirationTimeStampMs(),
+			agent,
+		})
+		.returning({
+			id: sessions.id,
+			expiresAt: sessions.expiresAt,
+		});
+	return session;
+};
+
 export async function getPasswordHash(password: string) {
 	const hash = await bcrypt.hash(password, 10);
 	return hash;
 }
 
-export const verifyUserPassword = async (userId: string, password: string) => {
+export const verifyUserPassword = async (
+	username: string,
+	password: string
+) => {
 	const user = await db.query.users.findFirst({
 		columns: {
 			id: true,
 		},
-		where: eq(users.id, userId),
+		where: eq(users.username, username),
 		with: {
 			password: {
 				columns: {
